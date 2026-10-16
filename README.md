@@ -11,14 +11,14 @@ Local JSON, CSV and Excel tools that run inside DSH. No Crawshrimp application, 
 | `crawshrimp_data_export` | JSON records to a new CSV or XLSX file |
 | `crawshrimp_data_transform` | Filter, deduplicate, sort, select and rename columns; preview or save |
 
-Useful for product-table checks, inventory summaries and turning browser/script results into spreadsheets. Files stay inside the configured workspace; writes require DSH's native approval service. DSH's `never` approval policy rejects actions that require approval. Existing files are never overwritten. All sessions using this instance share its configured workspace.
+Useful for product-table checks, inventory summaries and turning browser/script results into spreadsheets. Files stay inside the configured workspace; writes use DSH's native permission signals. A session in `danger-full-access` with native approval policy `never` already has a standing Full Access grant, so the plugin proceeds without a duplicate per-call prompt. In `ask`, or when the sandbox/approval service is missing or cannot be read, the plugin keeps the native approval path and fails closed when it cannot grant the write. Existing files are never overwritten. All sessions using this instance share its configured workspace.
 
 ## Install
 
 Requires Node.js 22.19+ or 24+, and DSH **0.2.1-alpha.4** (the tested API version). Install a built release tarball from [Releases](https://github.com/howtimeschange/dsh-crawshrimp-data/releases), or install the tagged sources, which already include executable JavaScript:
 
 ```sh
-dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.2.0
+dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.2.1
 DSH_DATA_WORKSPACE=/absolute/path/to/data dsh --profile ecommerce --dump-config
 DSH_DATA_WORKSPACE=/absolute/path/to/data dsh --profile ecommerce
 ```
@@ -68,7 +68,7 @@ Filters are AND-combined: `eq`, `ne`, `contains`, `in` (use `values`), `gt/gte/l
 
 Inputs are JSON records, UTF-8 CSV or XLSX up to 10 MiB; tables support 10,000 rows, 200 columns, 200,000 cells, column names up to 256 characters, unique nonempty headers and scalar cell values. Export input is capped at 5 MiB JSON, cells at 10,000 characters, previews at 512 KiB. Large tables fail explicitly rather than being silently truncated. XLSX formula cells use their saved cached result, or a marker when absent; formulas/macros are never evaluated. CSV and XLSX dates are not automatically normalized across formats. ZIP expansion is bounded before XLSX parsing. Filesystem confinement is a normal local path check, not an OS sandbox against another process changing symlinks concurrently.
 
-`npm test` verifies real Unicode CSV/XLSX round trips, numeric summaries, formula-string handling, path/symlink escapes, overwrite refusal, cancellation before output, and registration/approval/unload in actual Cordis + DSH ToolRuntime. No model API or merchant system is used. This plugin does not edit arbitrary existing workbooks, render charts, recalculate formulas or connect to seller accounts.
+`npm test` verifies real Unicode CSV/XLSX round trips, numeric summaries, formula-string handling, path/symlink escapes, overwrite refusal, cancellation before output, registration/approval/unload in actual Cordis + DSH ToolRuntime, and Full Access/ask/restricted/missing/error permission mappings. No model API or merchant system is used. This plugin does not edit arbitrary existing workbooks, render charts, recalculate formulas or connect to seller accounts.
 
 ## Related independent plugins
 
@@ -76,4 +76,4 @@ Inputs are JSON records, UTF-8 CSV or XLSX up to 10 MiB; tables support 10,000 r
 
 MIT. Inspired by the local artifact workflow in [Crawshrimp Harness](https://github.com/howtimeschange/crawshrimp-harness); implementation uses standalone Node libraries.
 
-Version 0.2.0 adds direct JSON-artifact reading and declarative table transformations. The original 0.1.0 tag is superseded; native approval handling was corrected in 0.1.1.
+Version 0.2.1 keeps direct JSON-artifact reading and declarative table transformations, and aligns write permissions with DSH's native Full Access preset. The original 0.1.0 tag is superseded.

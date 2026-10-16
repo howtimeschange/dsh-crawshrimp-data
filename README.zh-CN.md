@@ -11,14 +11,14 @@
 | `crawshrimp_data_export` | 将 JSON 记录写成新的 CSV/XLSX |
 | `crawshrimp_data_transform` | 筛选、去重、排序、选列、重命名，可预览或保存 |
 
-适合商品表检查、库存汇总、将浏览器或脚本提取的结果导出。读写限定在配置的工作目录；写文件走 DSH 原生审批，用户设置 `never` 审批策略时拒绝需要审批的操作。不会覆盖已有文件。使用同一插件实例的会话共享该目录。
+适合商品表检查、库存汇总、将浏览器或脚本提取的结果导出。读写限定在配置的工作目录；写文件使用 DSH 原生权限信号。会话同时处于 `danger-full-access` 且原生审批策略为 `never` 时，表示已有完全权限授予，插件直接执行，不重复弹出逐次审批；`ask`，或沙箱/审批服务缺失、读取异常时，仍走原生审批路径，无法获批就故障关闭。不会覆盖已有文件。使用同一插件实例的会话共享该目录。
 
 ## 安装
 
 需要 Node.js 22.19+ 或 24+，已验证 DSH **0.2.1-alpha.4**。可安装 [Release](https://github.com/howtimeschange/dsh-crawshrimp-data/releases) 的预打包文件，或安装已含 JavaScript 产物的 GitHub 标签：
 
 ```sh
-dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.2.0
+dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.2.1
 DSH_DATA_WORKSPACE=/绝对路径/数据目录 dsh --profile ecommerce --dump-config
 DSH_DATA_WORKSPACE=/绝对路径/数据目录 dsh --profile ecommerce
 ```
@@ -68,10 +68,10 @@ JSON 可传记录数组，或脚本返回的 `{ "success": true, "data": [...] }
 
 支持 10 MiB 内 JSON、UTF-8 CSV/XLSX，最多 10,000 行、200 列、200,000 单元格；列名最多 256 字符；表头不能为空或重复。导出 JSON 最多 5 MiB，单元格最多 10,000 字符，预览结果最多 512 KiB。超限明确报错。XLSX 公式仅读取已有缓存值，无缓存时返回标记；不执行公式或宏，不重算、不渲染、不编辑已有复杂工作簿。日期不做跨格式自动统一。读取 XLSX 前检查 ZIP 展开大小。目录约束是常规本地路径检查，不能代替防御其他进程并发修改软链接的操作系统沙箱。
 
-`npm test` 已覆盖真实中文 CSV/XLSX 读写和统计、公式文本、路径/软链接越界、拒绝覆盖、取消，以及真实 Cordis/DSH ToolRuntime 的注册、审批、卸载。无需模型 API 或真实商家账号。
+`npm test` 已覆盖真实中文 CSV/XLSX 读写和统计、公式文本、路径/软链接越界、拒绝覆盖、取消，真实 Cordis/DSH ToolRuntime 的注册、审批、卸载，以及完全权限/ask/受限策略/审批服务缺失与异常时的权限映射。无需模型 API 或真实商家账号。
 
 [浏览器插件](https://github.com/howtimeschange/dsh-crawshrimp-browser) · [Office 插件](https://github.com/howtimeschange/dsh-crawshrimp-office)。当前按浏览器、数据、Office 三类维护，每个插件均可单独安装运行。网页脚本与翻页归入浏览器插件。
 
 MIT。能力设计来自抓虾的本地产物处理流程，运行实现直接使用 Node 库。
 
-0.2.0 新增 JSON 产物直读和声明式表格转换。0.1.1 已修正原生审批策略；0.1.0 标签已被替代。
+0.2.1 对齐 DSH 原生完全权限策略：`danger-full-access` 与 `never` 同时成立时不重复请求审批；其他状态继续走原生审批并故障关闭。0.2.0 新增 JSON 产物直读和声明式表格转换；0.1.0 标签已被替代。

@@ -15,6 +15,23 @@ async function workspace(t) {
   return dir
 }
 
+async function permissionHarness(t, workspaceDir, { approval, sandboxPolicy } = {}) {
+  const ctx = new Context()
+  const promptDispose = ctx.provide('systemPrompt', { tools: () => () => {}, section: () => () => {} })
+  const approvalDispose = approval === undefined ? undefined : ctx.provide('approval', approval)
+  const sandboxDispose = sandboxPolicy === undefined ? undefined : ctx.provide('sandboxPolicy', sandboxPolicy)
+  const runtime = ctx.plugin(ToolRuntime); await runtime
+  const fiber = ctx.plugin(plugin, { workspaceDir }); await fiber
+  t.after(async () => {
+    await fiber.dispose()
+    await runtime.dispose()
+    await sandboxDispose?.()
+    await approvalDispose?.()
+    await promptDispose?.()
+  })
+  return ctx
+}
+
 test('exports Unicode XLSX and CSV, reads exact records and profiles missing/numeric fields', async t => {
   const files = await DataFiles.create(await workspace(t))
   const rows = [{ 商品: '棉衣', 价格: 39.5, 库存: 2 }, { 商品: '短裤', 价格: 60.5, 库存: null }]
@@ -102,4 +119,85 @@ test('actual DSH ApprovalService policy never rejects and records the decision',
   assert.deepEqual(await readdir(dir), [])
   assert.equal(events.at(-1).type, 'approval/decided')
   assert.equal(events.at(-1).data.outcome, 'rejected')
+})
+
+test('maps native Full Access to one standing grant and keeps all other states fail closed', async t => {
+  const fullRoot = await workspace(t)
+  let fullRequests = 0
+  const full = await permissionHarness(t, fullRoot, {
+    approval: {
+      effectivePolicy: () => 'never',
+      request: async () => { fullRequests += 1; return 'rejected' },
+    },
+    sandboxPolicy: { resolve: ({ session }) => ({ mode: 'danger-full-access', sessionId: session.id }) },
+  })
+  const fullResult = await full.tools.execute({
+    name: 'crawshrimp_data_export', callId: 'full-access',
+    arguments: { path: 'full-access.csv', rows: [{ 商品: '棉衣', 库存: 8 }] },
+    agent: { id: 'agent', session: { id: 'full-session' } }, signal: new AbortController().signal,
+  })
+  assert.equal(fullResult.isError, false, JSON.stringify(fullResult))
+  assert.equal(fullRequests, 0, 'Full Access must not open a second approval request')
+
+  const askRoot = await workspace(t)
+  let askRequests = 0
+  const ask = await permissionHarness(t, askRoot, {
+    approval: {
+      effectivePolicy: () => 'ask',
+      request: async () => { askRequests += 1; return 'allowed-once' },
+    },
+    sandboxPolicy: { resolve: () => ({ mode: 'danger-full-access' }) },
+  })
+  const askResult = await ask.tools.execute({
+    name: 'crawshrimp_data_export', callId: 'full-ask',
+    arguments: { path: 'ask.csv', rows: [{ 商品: '短裤', 库存: 2 }] },
+    agent: { id: 'agent', session: { id: 'ask-session' } }, signal: new AbortController().signal,
+  })
+  assert.equal(askResult.isError, false, JSON.stringify(askResult))
+  assert.equal(askRequests, 1, 'danger-full-access with ask still uses native approval')
+
+  const restrictedRoot = await workspace(t)
+  let restrictedRequests = 0
+  const restricted = await permissionHarness(t, restrictedRoot, {
+    approval: {
+      effectivePolicy: () => 'never',
+      request: async () => { restrictedRequests += 1; return 'rejected' },
+    },
+    sandboxPolicy: { resolve: () => ({ mode: 'workspace-write' }) },
+  })
+  const restrictedResult = await restricted.tools.execute({
+    name: 'crawshrimp_data_export', callId: 'restricted-never',
+    arguments: { path: 'restricted.csv', rows: [{ 商品: '衬衫' }] },
+    agent: { id: 'agent', session: { id: 'restricted-session' } }, signal: new AbortController().signal,
+  })
+  assert.equal(restrictedResult.isError, true)
+  assert.equal(restrictedRequests, 1, 'never with a restricted sandbox must not bypass the approval path')
+
+  const missingRoot = await workspace(t)
+  const missing = await permissionHarness(t, missingRoot, {
+    sandboxPolicy: { resolve: () => ({ mode: 'danger-full-access' }) },
+  })
+  const missingResult = await missing.tools.execute({
+    name: 'crawshrimp_data_export', callId: 'missing-approval',
+    arguments: { path: 'missing.csv', rows: [{ 商品: '卫衣' }] },
+    agent: { id: 'agent', session: { id: 'missing-session' } }, signal: new AbortController().signal,
+  })
+  assert.equal(missingResult.isError, true)
+
+  const errorRoot = await workspace(t)
+  let errorRequests = 0
+  const broken = await permissionHarness(t, errorRoot, {
+    approval: {
+      effectivePolicy: () => 'never',
+      request: async () => { errorRequests += 1; return 'rejected' },
+    },
+    sandboxPolicy: { resolve: () => { throw new Error('sandbox unavailable') } },
+  })
+  const brokenResult = await broken.tools.execute({
+    name: 'crawshrimp_data_export', callId: 'broken-sandbox',
+    arguments: { path: 'broken.csv', rows: [{ 商品: '袜子' }] },
+    agent: { id: 'agent', session: { id: 'broken-session' } }, signal: new AbortController().signal,
+  })
+  assert.equal(brokenResult.isError, true)
+  assert.equal(errorRequests, 1, 'permission detection errors must fall back to approval, never to an automatic grant')
 })
