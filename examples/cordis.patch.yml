@@ -1,0 +1,5 @@
+- insert:
+    - id: crawshrimp-data
+      name: dsh-crawshrimp-data
+      config:
+        workspaceDir: /absolute/path/to/data-workspace
