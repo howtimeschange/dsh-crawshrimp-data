@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { ToolRuntime } from '@deepseek-ai/dsh-tools'
+import { ApprovalService } from '@deepseek-ai/dsh-user-approval'
 import * as plugin from '../lib/index.js'
 import { DataFiles } from '../lib/tables.js'
 
@@ -85,4 +86,20 @@ test('real Cordis/ToolRuntime registers, enforces approval, exports and unloads'
   await fiber.dispose()
   assert.equal(ctx.tools.schemas().length, 0)
   await approval()
+})
+
+test('actual DSH ApprovalService policy never rejects and records the decision', async t => {
+  const dir = await workspace(t), ctx = new Context()
+  ctx.provide('systemPrompt', { tools: () => () => {}, section: () => () => {}, context: () => () => {}, getContextOrder: () => 0 })
+  const runtime = ctx.plugin(ToolRuntime); await runtime
+  const approval = ctx.plugin(ApprovalService, { policy: 'never' }); await approval
+  const fiber = ctx.plugin(plugin, { workspaceDir: dir }); await fiber
+  t.after(async () => { await fiber.dispose(); await approval.dispose(); await runtime.dispose() })
+  const events = [{ type: 'turn/start', data: {} }]
+  const session = { id: 'never-session', get seq() { return events.length }, eventAt: seq => events[seq], append: (type, data) => events.push({ type, data }) }
+  const denied = await ctx.tools.execute({ name: 'crawshrimp_data_export', callId: 'never-call', arguments: { path: 'denied.csv', rows: [{ a: 1 }] }, agent: { id: 'a', session }, signal: new AbortController().signal })
+  assert.equal(denied.isError, true)
+  assert.deepEqual(await readdir(dir), [])
+  assert.equal(events.at(-1).type, 'approval/decided')
+  assert.equal(events.at(-1).data.outcome, 'rejected')
 })

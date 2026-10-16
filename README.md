@@ -10,14 +10,14 @@ Local CSV and Excel tools that run inside DSH. No Crawshrimp application, backen
 | `crawshrimp_data_profile` | Missing values, distinct counts and numeric min/max/sum/mean |
 | `crawshrimp_data_export` | JSON records to a new CSV or XLSX file |
 
-Useful for product-table checks, inventory summaries and turning browser/script results into spreadsheets. Files stay inside the configured workspace; writes require DSH's native approval service. The user's `never` permission policy permits writes without a prompt. Existing files are never overwritten. All sessions using this instance share its configured workspace.
+Useful for product-table checks, inventory summaries and turning browser/script results into spreadsheets. Files stay inside the configured workspace; writes require DSH's native approval service. DSH's `never` approval policy rejects actions that require approval. Existing files are never overwritten. All sessions using this instance share its configured workspace.
 
 ## Install
 
 Requires Node.js 22.19+ or 24+, and DSH **0.2.1-alpha.4** (the tested API version). Install a built release tarball from [Releases](https://github.com/howtimeschange/dsh-crawshrimp-data/releases), or install the tagged sources, which already include executable JavaScript:
 
 ```sh
-dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.1.0
+dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.1.1
 DSH_DATA_WORKSPACE=/absolute/path/to/data dsh --profile ecommerce --dump-config
 DSH_DATA_WORKSPACE=/absolute/path/to/data dsh --profile ecommerce
 ```
@@ -53,3 +53,5 @@ Inputs are UTF-8 CSV or XLSX up to 10 MiB; tables support 10,000 rows, 200 colum
 [Browser](https://github.com/howtimeschange/dsh-crawshrimp-browser) · [Scripts](https://github.com/howtimeschange/dsh-crawshrimp-scripts) · [Office](https://github.com/howtimeschange/dsh-crawshrimp-office). Each installs separately and works without the others.
 
 MIT. Inspired by the local artifact workflow in [Crawshrimp Harness](https://github.com/howtimeschange/crawshrimp-harness); implementation uses standalone Node libraries.
+
+Version 0.1.1 corrects native approval policy handling. Use 0.1.1 or later; the pre-release 0.1.0 tag is superseded.

@@ -1,6 +1,6 @@
 {
   "name": "dsh-crawshrimp-data",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Independent CSV and XLSX tools for DeepSeek Harness; no Crawshrimp backend",
   "type": "module",
   "main": "lib/index.js",
@@ -60,5 +60,8 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-user-approval": "0.2.1-alpha.4"
   }
 }

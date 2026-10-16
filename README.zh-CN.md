@@ -10,14 +10,14 @@
 | `crawshrimp_data_profile` | 缺失值、去重数量、数值范围/合计/均值 |
 | `crawshrimp_data_export` | 将 JSON 记录写成新的 CSV/XLSX |
 
-适合商品表检查、库存汇总、将浏览器或脚本提取的结果导出。读写限定在配置的工作目录；写文件走 DSH 原生审批，用户设置 `never` 权限策略时免提示。不会覆盖已有文件。使用同一插件实例的会话共享该目录。
+适合商品表检查、库存汇总、将浏览器或脚本提取的结果导出。读写限定在配置的工作目录；写文件走 DSH 原生审批，用户设置 `never` 审批策略时拒绝需要审批的操作。不会覆盖已有文件。使用同一插件实例的会话共享该目录。
 
 ## 安装
 
 需要 Node.js 22.19+ 或 24+，已验证 DSH **0.2.1-alpha.4**。可安装 [Release](https://github.com/howtimeschange/dsh-crawshrimp-data/releases) 的预打包文件，或安装已含 JavaScript 产物的 GitHub 标签：
 
 ```sh
-dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.1.0
+dsh plugin --profile ecommerce add -w github:howtimeschange/dsh-crawshrimp-data#v0.1.1
 DSH_DATA_WORKSPACE=/绝对路径/数据目录 dsh --profile ecommerce --dump-config
 DSH_DATA_WORKSPACE=/绝对路径/数据目录 dsh --profile ecommerce
 ```
@@ -51,3 +51,5 @@ DSH_DATA_WORKSPACE=/绝对路径/数据目录 dsh --profile ecommerce
 [浏览器插件](https://github.com/howtimeschange/dsh-crawshrimp-browser) · [脚本插件](https://github.com/howtimeschange/dsh-crawshrimp-scripts) · [Office 插件](https://github.com/howtimeschange/dsh-crawshrimp-office)。四个插件均可单独安装运行。
 
 MIT。能力设计来自抓虾的本地产物处理流程，运行实现直接使用 Node 库。
+
+0.1.1 已修正原生审批策略处理。请使用 0.1.1 或更新版本，0.1.0 预发布标签已被替代。
