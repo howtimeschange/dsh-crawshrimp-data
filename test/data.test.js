@@ -69,7 +69,7 @@ test('real Cordis/ToolRuntime registers, enforces approval, exports and unloads'
   const runtime = ctx.plugin(ToolRuntime); await runtime
   const fiber = ctx.plugin(plugin, { workspaceDir: dir }); await fiber
   t.after(async () => { await fiber.dispose(); await runtime.dispose() })
-  assert.equal(ctx.tools.schemas().length, 3)
+  assert.equal(ctx.tools.schemas().length, 4)
   const call = { name: 'crawshrimp_data_export', callId: 'data-one', arguments: { path: 'approved.xlsx', rows: [{ 商品: 'T恤', 销量: 5 }] }, agent: { id: 'a', session: { id: 's' } }, signal: new AbortController().signal }
   const denied = await ctx.tools.execute(call)
   assert.equal(denied.isError, true)

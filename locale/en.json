@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Crawshrimp Data",
-    "description": "Independent CSV and Excel preview, profiling and export."
+    "description": "Independent JSON/CSV/Excel preview, profiling, transformation and export."
   }
 }

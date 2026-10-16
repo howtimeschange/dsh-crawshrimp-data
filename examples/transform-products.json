@@ -1,0 +1,9 @@
+{
+  "path": "sample-products.json",
+  "outputPath": "products-clean.xlsx",
+  "filters": [{ "column": "库存", "op": "gt", "value": 0 }],
+  "dedupeBy": ["sku"],
+  "sortBy": [{ "column": "价格", "numeric": true, "direction": "desc" }],
+  "columns": ["sku", "商品", "价格", "库存"],
+  "rename": { "sku": "货号" }
+}
