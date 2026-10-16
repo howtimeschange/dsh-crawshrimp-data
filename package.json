@@ -1,7 +1,7 @@
 {
   "name": "dsh-crawshrimp-data",
   "version": "0.2.1",
-  "description": "Independent CSV and XLSX tools for DeepSeek Harness; no Crawshrimp backend",
+  "description": "DeepSeek Harness（DSH）本地 JSON、CSV、Excel 数据预览、统计、转换与导出工具 | Local JSON, CSV and Excel tools for DSH",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -13,6 +13,7 @@
     "lib",
     "examples",
     "README.md",
+    "README.en.md",
     "README.zh-CN.md",
     "LICENSE",
     "cordis.patch.yml",
@@ -37,7 +38,11 @@
     "deepseek-harness",
     "crawshrimp",
     "ecommerce",
-    "data"
+    "data",
+    "csv",
+    "excel",
+    "xlsx",
+    "json"
   ],
   "dependencies": {
     "@deepseek-ai/dsh-mcp-client": "0.2.1-alpha.4",
